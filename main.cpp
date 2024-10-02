@@ -28,15 +28,23 @@
 double hit_sphere(const point3 &center, double radius, const ray &r) {
     // Refer to the tutorial link for the math behind this.
     vec3 oc = center - r.origin();
-    auto a = dot(r.direction(), r.direction());
-    auto b = -2.0 * dot(r.direction(), oc);
-    auto c = dot(oc, oc) - radius * radius;
-    auto discriminant = b * b - 4 * a * c;
+
+    // Deprecated
+//    auto a = dot(r.direction(), r.direction());
+//    auto b = -2.0 * dot(r.direction(), oc);
+//    auto c = dot(oc, oc) - radius * radius;
+//    auto discriminant = b * b - 4 * a * c;
+
+    // After simplifying  the code block above can be rewritten as below. Refer to the tutorial for the simplification explanation.
+    auto a = r.direction().length_squared();
+    auto h = dot(r.direction(), oc);
+    auto c = oc.length_squared() - radius*radius;
+    auto discriminant = h*h - a*c;
 
     if (discriminant < 0) {
         return -1.0; // No intersect between the ray and the sphere.
     } else {
-        return (-b - sqrt(discriminant)) / (2.0 * a);
+        return (h - sqrt(discriminant)) / a;
     }
 }
 
@@ -63,8 +71,12 @@ color ray_color(const ray &r) {
 
     // Return red for any ray that hits the sphere
     point3 sphereCenter(0, 0, -1);
+    // Get the t at which the ray intersects the sphere.
     auto t = hit_sphere(sphereCenter, 0.5, r);
     if (t > 0.0) {
+        // Calculate the unit normal vector by:
+        // 1. Subtract the intersect point by the sphere's center to get the normal vector.
+        // 2. Plug the normal vector into unit_vector to normalize it.
         vec3 N = unit_vector(r.at(t) - vec3(sphereCenter.x(), sphereCenter.y(), sphereCenter.z()));
         return 0.5 * color(N.x() + 1, N.y() + 1, N.z() + 1);
     }
