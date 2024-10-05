@@ -2,12 +2,10 @@
  * This ray tracing project follows the tutorial https://raytracing.github.io/books/RayTracingInOneWeekend.html#overview
  * Refer to this source for math concepts such as linear interpolation, ray-sphere intersection calculation, etc..
  */
-
-#include "src/color.h"
-#include "src/vec3.h"
-#include "src/Ray.h"
-
-#include <iostream>
+#include "src/Utils.h"
+#include "src/hittable.h"
+#include "src/hittablelist.h"
+#include "src/sphere.h"
 
 /**
  * @brief Determine if the ray hits the sphere
@@ -65,21 +63,26 @@ double hit_sphere(const point3 &center, double radius, const ray &r) {
  * @param r A scene ray.
  * @return The color of the given scene ray.
  */
-color ray_color(const ray &r) {
+color ray_color(const ray &r, const hittable& world) {
+    hit_record rec;
+    if (world.hit(r, 0, infinity, rec)) {
+        return 0.5 * (rec.normal + color(1,1,1));
+    }
+
     color startColor(1.0, 1.0, 1.0);    // White at a=0
     color endColor(0.5, 0.7, 1.0);      // Sky blue at a=1
 
-    // Return red for any ray that hits the sphere
-    point3 sphereCenter(0, 0, -1);
-    // Get the t at which the ray intersects the sphere.
-    auto t = hit_sphere(sphereCenter, 0.5, r);
-    if (t > 0.0) {
-        // Calculate the unit normal vector by:
-        // 1. Subtract the intersect point by the sphere's center to get the normal vector.
-        // 2. Plug the normal vector into unit_vector to normalize it.
-        vec3 N = unit_vector(r.at(t) - vec3(sphereCenter.x(), sphereCenter.y(), sphereCenter.z()));
-        return 0.5 * color(N.x() + 1, N.y() + 1, N.z() + 1);
-    }
+//    // Return red for any ray that hits the sphere
+//    point3 sphereCenter(0, 0, -1);
+//    // Get the t at which the ray intersects the sphere.
+//    auto t = hit_sphere(sphereCenter, 0.5, r);
+//    if (t > 0.0) {
+//        // Calculate the unit normal vector by:
+//        // 1. Subtract the intersect point by the sphere's center to get the normal vector.
+//        // 2. Plug the normal vector into unit_vector to normalize it.
+//        vec3 N = unit_vector(r.at(t) - vec3(sphereCenter.x(), sphereCenter.y(), sphereCenter.z()));
+//        return 0.5 * color(N.x() + 1, N.y() + 1, N.z() + 1);
+//    }
 
     // Normalize the ray direction
     vec3 unit_direction = unit_vector(r.direction());
@@ -103,6 +106,11 @@ int main() {
     // Calculate the image height, and ensure that it's at least 1.
     int image_height = int(image_width / aspect_ratio);
     image_height = (image_height < 1) ? 1 : image_height;
+
+    // World
+    hittable_list world;
+    world.add(make_shared<sphere>(point3(0,0,-1), 0.5));
+    world.add(make_shared<sphere>(point3(0,-100.5,-1), 100));
 
     // Camera
     auto focal_length = 1.0; // Focal length: Length from the eye point/camera to the center of the viewport orthogonally.
@@ -142,7 +150,7 @@ int main() {
             auto ray_direction = pixel_center - camera_center;
             ray r(camera_center, ray_direction);
 
-            color pixel_color = ray_color(r);
+            color pixel_color = ray_color(r, world);
             write_color(std::cout, pixel_color);
         }
     }

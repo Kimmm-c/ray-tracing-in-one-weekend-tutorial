@@ -1,13 +1,11 @@
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
 
+#include "Utils.h"
 #include "hittable.h"
 
-#include <memory>
 #include <vector>
 
-using std::make_shared;
-using std::shared_ptr;
 using namespace std;
 
 class hittable_list : public hittable {
